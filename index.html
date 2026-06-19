@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>🎱 星轨台球 · 天梯榜</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ========== 顶部导航 ========== -->
+<nav class="top-nav">
+    <div class="nav-brand">🎱 星轨天梯榜</div>
+    <div class="nav-actions">
+        <span id="currentPlayerDisplay" class="nav-player" onclick="APP.UI.showView('profile')">未登录</span>
+        <button class="nav-btn" onclick="APP.UI.showView('profile')">👤</button>
+    </div>
+</nav>
+
+<!-- ========== 视图容器 ========== -->
+<main id="appContainer">
+
+    <!-- ===== 首页：天梯榜 ===== -->
+    <section id="view-home" class="view active">
+        <div class="hero-banner">
+            <div class="hero-rank" id="heroRank">
+                <div class="hero-label">本月天梯</div>
+                <div class="hero-count">🔥 实时对决中</div>
+            </div>
+        </div>
+
+        <div class="tab-bar">
+            <button class="tab-btn active" onclick="APP.UI.switchTab('leaderboard')">🏆 排行榜</button>
+            <button class="tab-btn" onclick="APP.UI.switchTab('recent')">⚡ 最新战报</button>
+        </div>
+
+        <!-- 排行榜 -->
+        <div id="tab-leaderboard" class="tab-content active">
+            <div class="leaderboard-list" id="leaderboardList">
+                <div class="empty-state">🏓<br>暂无玩家数据<br>快邀请朋友来对战吧！</div>
+            </div>
+        </div>
+
+        <!-- 最新战报 -->
+        <div id="tab-recent" class="tab-content">
+            <div class="match-feed" id="matchFeed">
+                <div class="empty-state">⚔️<br>暂无对战记录</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== 对战页 ===== -->
+    <section id="view-battle" class="view">
+        <div class="section-header">
+            <button class="back-btn" onclick="APP.UI.showView('home')">← 返回</button>
+            <h2>⚔️ 发起对战</h2>
+        </div>
+
+        <!-- 选择对手 -->
+        <div class="battle-step" id="battleStep1">
+            <div class="search-box">
+                <input type="text" id="opponentSearch" placeholder="🔍 搜索对手姓名或手机号..." 
+                       oninput="APP.Battle.searchOpponent()">
+            </div>
+            <div class="player-select-list" id="opponentList"></div>
+        </div>
+
+        <!-- 对战确认 -->
+        <div class="battle-step hidden" id="battleStep2">
+            <div class="battle-card">
+                <div class="battle-vs">
+                    <div class="battle-player" id="battleMe">
+                        <div class="bp-avatar">😎</div>
+                        <div class="bp-name"></div>
+                        <div class="bp-rank"></div>
+                    </div>
+                    <div class="vs-divider">
+                        <div class="vs-text">VS</div>
+                        <div class="vs-handicap" id="vsHandicap"></div>
+                    </div>
+                    <div class="battle-player" id="battleOpp">
+                        <div class="bp-avatar">🤔</div>
+                        <div class="bp-name"></div>
+                        <div class="bp-rank"></div>
+                    </div>
+                </div>
+
+                <div class="battle-info" id="battleInfo"></div>
+
+                <div class="battle-result-btns">
+                    <button class="btn-win" onclick="APP.Battle.submitResult('win')">
+                        🏆 我赢了
+                    </button>
+                    <button class="btn-lose" onclick="APP.Battle.submitResult('lose')">
+                        😔 我输了
+                    </button>
+                </div>
+                <p class="battle-tip">⚠️ 请诚实记录，对手需确认比分</p>
+            </div>
+        </div>
+
+        <!-- 比赛结果 -->
+        <div class="battle-step hidden" id="battleStep3">
+            <div class="result-card">
+                <div class="result-emoji" id="resultEmoji">🎉</div>
+                <div class="result-text" id="resultText"></div>
+                <div class="result-score" id="resultScore"></div>
+                <div class="result-detail" id="resultDetail"></div>
+                <button class="btn-primary" onclick="APP.Battle.reset()">再来一场</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== 兑换商城 ===== -->
+    <section id="view-shop" class="view">
+        <div class="section-header">
+            <button class="back-btn" onclick="APP.UI.showView('home')">← 返回</button>
+            <h2>🎁 积分兑换</h2>
+        </div>
+        <div class="shop-header">
+            <div class="my-points" id="shopMyPoints">我的积分：0</div>
+        </div>
+        <div class="shop-grid" id="shopGrid"></div>
+
+        <!-- 兑换记录 -->
+        <div class="section-title">📋 我的兑换记录</div>
+        <div class="redemption-list" id="shopRedemptions">
+            <div class="empty-state">暂无兑换记录</div>
+        </div>
+    </section>
+
+    <!-- ===== 个人中心 ===== -->
+    <section id="view-profile" class="view">
+        <div class="section-header">
+            <button class="back-btn" onclick="APP.UI.showView('home')">← 返回</button>
+            <h2>👤 个人中心</h2>
+        </div>
+
+        <div id="profileLoggedOut" class="profile-card">
+            <div class="profile-avatar-big">🎱</div>
+            <h3>欢迎来到天梯榜</h3>
+            <p>注册后即可参与对战排行</p>
+            <form class="register-form" onsubmit="APP.Profile.register(event)">
+                <input type="text" id="regName" placeholder="你的昵称" required maxlength="12">
+                <input type="tel" id="regPhone" placeholder="手机号（选填）" maxlength="11">
+                <button type="submit" class="btn-primary">🎯 加入天梯</button>
+            </form>
+        </div>
+
+        <div id="profileLoggedIn" class="hidden">
+            <div class="profile-card">
+                <div class="profile-avatar-big" id="profileEmoji">😎</div>
+                <h2 id="profileName"></h2>
+                <div class="profile-rank-badge" id="profileRank"></div>
+                <div class="profile-score-big" id="profileScore"></div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-value" id="statMatches">0</div>
+                    <div class="stat-label">总对战场</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="statWins">0</div>
+                    <div class="stat-label">胜场</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="statWinRate">-</div>
+                    <div class="stat-label">胜率</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="statStreak">0</div>
+                    <div class="stat-label">连胜</div>
+                </div>
+            </div>
+
+            <div class="section-title">🏅 我的段位之路</div>
+            <div class="rank-progress" id="rankProgress"></div>
+
+            <div class="section-title">⚔️ 我的近期战绩</div>
+            <div class="match-feed" id="profileMatchFeed"></div>
+
+            <button class="btn-danger" onclick="APP.Profile.logout()">退出登录</button>
+        </div>
+    </section>
+
+    <!-- ===== 管理员面板 ===== -->
+    <section id="view-admin" class="view">
+        <div class="section-header">
+            <button class="back-btn" onclick="APP.UI.showView('home')">← 返回</button>
+            <h2>🛠️ 管理员</h2>
+        </div>
+        <div class="admin-login" id="adminLogin">
+            <input type="password" id="adminPwd" placeholder="管理员密码" maxlength="20">
+            <button class="btn-primary" onclick="APP.Admin.login()">🔐 验证</button>
+            <p style="text-align:center;color:#888">默认密码: 888888</p>
+        </div>
+        <div class="admin-panel hidden" id="adminPanel">
+            <div class="admin-tabs">
+                <button class="tab-btn active" onclick="APP.Admin.switchTab('confirm')">✅ 待确认</button>
+                <button class="tab-btn" onclick="APP.Admin.switchTab('prizes')">🎁 奖品管理</button>
+                <button class="tab-btn" onclick="APP.Admin.switchTab('players')">👥 玩家管理</button>
+            </div>
+            <div id="adminTabContent"></div>
+        </div>
+    </section>
+
+</main>
+
+<!-- ========== 底部导航 ========== -->
+<nav class="bottom-nav">
+    <button class="bn-btn active" data-view="home" onclick="APP.UI.showView('home')">
+        <div class="bn-icon">🏆</div>
+        <div class="bn-label">天梯榜</div>
+    </button>
+    <button class="bn-btn" data-view="battle" onclick="APP.UI.showView('battle')">
+        <div class="bn-icon">⚔️</div>
+        <div class="bn-label">对战</div>
+    </button>
+    <button class="bn-btn" data-view="shop" onclick="APP.UI.showView('shop')">
+        <div class="bn-icon">🎁</div>
+        <div class="bn-label">兑礼品</div>
+    </button>
+    <button class="bn-btn" data-view="admin" onclick="APP.UI.showView('admin')">
+        <div class="bn-icon">🛠️</div>
+        <div class="bn-label">管理</div>
+    </button>
+</nav>
+
+<!-- Toast 提示 -->
+<div id="toast" class="toast hidden"></div>
+
+<script src="js/store.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
