@@ -1,0 +1,12 @@
+{
+  "name": "pool-ladder",
+  "version": "1.0.0",
+  "description": "星轨台球天梯榜",
+  "main": "server-full.js",
+  "scripts": {
+    "start": "node server-full.js"
+  },
+  "engines": {
+    "node": ">=16"
+  }
+}
